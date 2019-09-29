@@ -33,7 +33,7 @@ class Universal
             'displayErrors' => isset($config['displayErrors']) ? (int) $config['displayErrors'] > 0 : false,
         ]);
 
-        if (isset($config['logsDir']) && strlen($config['logsDir']) > 0) {
+        if (isset($config['dataDir']) && strlen($config['dataDir']) > 0) {
             $app->data->useFileDriver($config['dataDir']);
         } else {
             throw new \Exception('The dataDir option is required!');
