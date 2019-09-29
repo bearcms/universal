@@ -51,14 +51,24 @@ class BasicsTest extends PHPUnit\Framework\TestCase
      */
     public function testCapture()
     {
+        $this->expectOutputRegex('/Bear CMS \(powered by Bear Framework\)/');
+        $this->expectOutputRegex('/Hi123/');
         $universal = $this->getInstance();
-        ob_start();
         $universal->captureStart();
         echo 'Hi123';
         $universal->captureSend();
-        $output = ob_get_clean();
-        $this->assertTrue(strpos($output, '<meta name="generator" content="Bear CMS (powered by Bear Framework)">') !== false);
-        $this->assertTrue(strpos($output, 'Hi123') !== false);
     }
+
+    /**
+     * 
+     */
+//    public function testAutoCapture()
+//    {
+//        $this->expectOutputRegex('/Bear CMS \(powered by Bear Framework\)/');
+//        $this->expectOutputRegex('/Hi123/');
+//        $universal = $this->getInstance();
+//        $universal->autoCapture();
+//        echo 'Hi123';
+//    }
 
 }

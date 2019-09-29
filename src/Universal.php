@@ -24,14 +24,6 @@ class Universal
     {
         $app = new \BearFramework\App();
 
-        if (!isset($config['dataDir'])) {
-            throw new \Exception('The dataDir option is required!');
-        }
-
-        if (!isset($config['logsDir'])) {
-            throw new \Exception('The logsDir option is required!');
-        }
-
         if (!isset($config['appSecretKey'])) {
             throw new \Exception('The appSecretKey option is required!');
         }
@@ -41,7 +33,11 @@ class Universal
             'displayErrors' => isset($config['displayErrors']) ? (int) $config['displayErrors'] > 0 : false,
         ]);
 
-        $app->data->useFileDriver($config['dataDir']);
+        if (isset($config['logsDir']) && strlen($config['logsDir']) > 0) {
+            $app->data->useFileDriver($config['dataDir']);
+        } else {
+            throw new \Exception('The dataDir option is required!');
+        }
         $app->cache->useAppDataDriver();
         if (isset($config['logsDir']) && strlen($config['logsDir']) > 0) {
             $app->logs->useFileLogger($config['logsDir']);
@@ -50,22 +46,18 @@ class Universal
         }
 
         $bearCMSConfig = [
-            'serverUrl' => isset($config['serverUrl']) ? $config['serverUrl'] : 'https://r05.bearcms.com/',
+            'serverUrl' => isset($config['serverURL']) ? $config['serverURL'] : 'https://r05.bearcms.com/',
             'appSecretKey' => $config['appSecretKey'],
-            'logServerRequests' => false,
-            'features' => ['ELEMENTS', 'PAGES', 'BLOG', 'THEMES', 'COMMENTS', 'SETTINGS', 'NOTIFICATIONS', 'USERS', 'ABOUT', 'ADDONS'],
             'addDefaultThemes' => true,
-            'defaultThemeID' => isset($config['defaultThemeID']) ? $config['defaultThemeID'] : 'bearcms/themeone',
+            'defaultThemeID' => 'none', //isset($config['defaultThemeID']) ? $config['defaultThemeID'] : 'bearcms/themeone',
             'maxUploadsSize' => null,
-            'useDataCache' => true,
-            'dataCachePrefix' => md5($config['appSecretKey']),
+            'features' => ['ELEMENTS', 'FILES', 'ABOUT', 'SETTINGS', 'USERS'],
             'htmlSandboxUrl' => 'https://cdn8.amcn.in/htmlSandbox.min.html',
             'uiColor' => isset($config['uiColor']) ? $config['uiColor'] : null,
             'uiTextColor' => isset($config['uiTextColor']) ? $config['uiTextColor'] : null,
             'whitelabel' => isset($config['whitelabel']) ? $config['whitelabel'] : false,
             'appSpecificServerData' => [
-                'clientID' => 'bearcms/universal',
-                'releaseChannel' => isset($config['releaseChannel']) ? $config['releaseChannel'] : ''
+                'clientID' => 'bearcms/universal'
             ],
             'autoCreateHomePage' => false
         ];
@@ -94,7 +86,7 @@ class Universal
      * 
      * @param string $content The response content.
      * @param string $mimeType The response MIME type.
-     * @param string $headers The response headers.
+     * @param string $headers The response headers in the following format: ['name'=>'value', 'name'=>'value'].
      * @return \BearCMS\Universal\Response
      */
     public function makeResponse(string $content, string $mimeType = 'text/html', array $headers = []): \BearCMS\Universal\Response
@@ -115,20 +107,7 @@ class Universal
     public function send(\BearCMS\Universal\Response $response): void
     {
         $app = \BearFramework\App::get();
-        $isHTMLResponse = $response->mimeType === 'text/html';
-        if ($isHTMLResponse) {
-            $resp = new \BearFramework\App\Response\HTML();
-        } else {
-            $resp = new \BearFramework\App\Response();
-            $resp->headers->set($resp->headers->make('Content-Type', $response->mimeType));
-        }
-        $resp->content = $response->content;
-        foreach ($response->headers as $name => $value) {
-            $resp->headers->set($resp->headers->make($name, $value));
-        }
-        if ($isHTMLResponse) {
-            $app->bearCMS->apply($resp);
-        }
+        $resp = $this->makeInternalResponse($response);
         $app->send($resp);
     }
 
@@ -154,4 +133,45 @@ class Universal
         $this->send($response);
     }
 
+    /**
+     * Enables automatic capturing, updating and sending the response.
+     * 
+     * @return void
+     */
+    // public function enableAutoCapture(): void
+    // { // NOT READY YET. Has some problems in bearcms->process()
+    //     ob_start(function ($content) {
+    //         $response = $this->makeResponse($content);
+    //         $response->headers['X-asd'] = '3';
+    //         $resp = $this->makeInternalResponse($response);
+    //         $this->send($response);
+    //         return $response->content;
+    //     });
+    // }
+
+    /**
+     * Creates a BearFramework\App\Response from BearCMS\Universal\Response
+     * 
+     * @param \BearCMS\Universal\Response $response The source response.
+     * @return \BearFramework\App\Response
+     */
+    private function makeInternalResponse(\BearCMS\Universal\Response $response): \BearFramework\App\Response
+    {
+        $app = \BearFramework\App::get();
+        $isHTMLResponse = $response->mimeType === 'text/html';
+        if ($isHTMLResponse) {
+            $resp = new \BearFramework\App\Response\HTML();
+        } else {
+            $resp = new \BearFramework\App\Response();
+            $resp->headers->set($resp->headers->make('Content-Type', $response->mimeType));
+        }
+        $resp->content = $response->content;
+        foreach ($response->headers as $name => $value) {
+            $resp->headers->set($resp->headers->make($name, $value));
+        }
+        if ($isHTMLResponse) {
+            $app->bearCMS->apply($resp);
+        }
+        return $resp;
+    }
 }

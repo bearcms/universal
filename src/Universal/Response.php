@@ -16,21 +16,23 @@ class Response
 {
 
     /**
-     *
+     *  The response body.
+     * 
      * @var string 
      */
     public $content = null;
 
     /**
-     *
+     * The MIME type.
+     * 
      * @var string 
      */
     public $mimeType = null;
-    
+
     /**
-     *
+     * A list of headers in the following format: ['name'=>'value', 'name'=>'value']
+     * 
      * @var array 
      */
     public $headers = [];
-
 }
