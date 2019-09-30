@@ -10,6 +10,11 @@ composer require bearcms/universal
 ```
 The library's autoloader will be automatically run when including `vendor/autoload.php`.
 
+You can quick start a new project by running
+```
+composer create-project bearcms/universal-app [my-app-name]
+```
+
 ### Download a ZIP file
 Download the latest release ZIP file from from the [releases page](https://github.com/bearcms/universal/releases). Then unzip and include the library's autoloader.
 ```php
